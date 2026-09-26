@@ -49,19 +49,19 @@ Lagrangian Drift Model
           GIS / Dashboard
 
 Major Components
-1. Satellite Oil Spill Detection
 
+1. Satellite Oil Spill Detection
 Satellite imagery is processed using a deep-learning based segmentation model to detect regions that are potentially affected by oil spills.
 
 The detection stage provides:
-
 Spill location
 Detection timestamp
 Spill mask
 Spill area
 Detection confidence
-2. Lagrangian Oil Drift Modelling
 
+
+2. Lagrangian Oil Drift Modelling
 The Lagrangian model estimates how the detected oil could have moved under ocean-current conditions.
 
 Two directions are used:
@@ -71,21 +71,19 @@ Forward tracking to predict the future movement of the detected spill.
 
 Ocean current data is obtained from Copernicus Marine data products.
 
-3. AIS Vessel Identification
 
+3. AIS Vessel Identification
 The estimated source location and time are passed to the AIS module.
 
 AIS data is filtered using:
-
 Spatial proximity to the estimated source
 Temporal proximity to the estimated release time
-
 Candidate vessel tracks are then converted into behavioural and trajectory-based features.
 
+
+
 4. XGBoost Candidate Ranking
-
 An XGBoost classifier is used to estimate a source-consistency probability for each candidate vessel.
-
 The model uses 18 AIS-derived features covering:
 
 Spatial proximity
@@ -97,8 +95,8 @@ AIS continuity
 
 The output is a ranked list of potential source vessels.
 
-5. GIS and Dashboard
 
+5. GIS and Dashboard
 The system output can be visualized through a GIS/dashboard layer containing:
 
 Detected spill location
