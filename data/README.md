@@ -42,19 +42,4 @@ The resulting spill location and detection timestamp are passed to the trajector
 
 Risk mapping may use geographic and coastal information to estimate potentially affected areas and support visualization.
 
-## Data Handling
 
-Large datasets and proprietary/model-specific files are not required to be committed directly to this repository.
-
-The repository should contain documentation describing:
-
-- Dataset source
-- Dataset purpose
-- Required format
-- Processing requirements
-
-## Prototype Data
-
-The prototype may use controlled or synthetic data for demonstration and testing.
-
-Synthetic AIS data should be clearly identified as synthetic and should not be presented as real-world vessel observations.
