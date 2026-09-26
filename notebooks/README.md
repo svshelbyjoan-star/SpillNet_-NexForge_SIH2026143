@@ -8,5 +8,5 @@ Planned sections:
 - Spill detection
 - Lagrangian trajectory modelling
 - AIS preprocessing
-- AIS feature engineering
-- XGBoost vessel ranking
+- Predictive Risk Mapping
+
