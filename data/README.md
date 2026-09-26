@@ -1,130 +1,200 @@
 # SPILLNET Data
 
-This directory documents the datasets used by the SPILLNET prototype.
+This directory documents the datasets used by SPILLNET for satellite-based oil-spill detection, ocean-current modelling, AIS vessel analysis, and the Chennai-region prototype demonstration.
 
-The project uses a combination of satellite imagery, ocean-current data, real AIS data for model development/validation, and a synthetic Chennai AIS dataset for the prototype demonstration.
+The project combines:
 
----
-
-## 1. Satellite Data
-
-Satellite imagery is used as the input for the oil-spill detection module.
-
-### Purpose
-
-The satellite data is processed by the oil-spill detection model to identify potential oil-spill regions and estimate their geographic location.
-
-### Output
-
-The spill detection module provides information such as:
-
-- Detected spill location
-- Latitude
-- Longitude
-- Detection timestamp
-- Spill region/mask
-- Detection confidence
-
-The detected spill location is passed to the Lagrangian trajectory model.
+1. Sentinel-1 SAR satellite imagery
+2. Copernicus Marine ocean-current data
+3. Real AIS data from MarineCadastre
+4. Synthetic Chennai/Ennore AIS data
 
 ---
 
-# 2. Copernicus Marine Ocean-Current Data
+## 1. Satellite Imagery Dataset
 
-The Lagrangian model uses ocean-current data from the Copernicus Marine Service.
+### Dataset Used
 
-### Dataset
+SPILLNET uses the **Sentinel-1 SAR Oil Spill Dataset** published on Zenodo by Trujillo-Acatitla et al.
 
-**Global Ocean Physics Analysis and Forecast**
+The dataset was selected because it provides Sentinel-1 Synthetic Aperture Radar (SAR) imagery together with ground-truth masks specifically for oil-spill detection and segmentation.
 
-Dataset:
+The SIH26143 problem statement also specifies the Zenodo Sentinel-1 SAR Oil Spill Dataset as the satellite imagery data source.
 
-cmems_mod_glo_phy_anfc_merged-uv_PT1H-i
+### Dataset Structure
 
-Variables used:
+The complete dataset is divided into three parts:
 
-- uo — Eastward sea-water velocity
-- vo— Northward sea-water velocity
+| Part | Purpose | Data |
+|---|---|---|
+| Part I | Training and validation | Oil-spill images + masks |
+| Part II | Training and validation | No-oil and look-alike images + masks |
+| Part III | Testing | Oil, no-oil and look-alike images + masks |
 
-Units:
+### Image Characteristics
 
-m/s
+The Sentinel-1 SAR images are provided as:
 
-The surface current layer was used for the prototype.
+- Sigma0 backscatter
+- Decibel (dB) values
+- VV and VH polarizations
+- 2048 × 2048 × 2 dimensions
+- TIFF format
 
-### Prototype Geographic Region
+The corresponding ground-truth masks are 2048 × 2048.
 
-The Copernicus subset used for the Chennai-region prototype covers:
+Only the Sentinel-1 SAR images are georeferenced; the ground-truth masks are provided as image matrices for model training, validation and testing.
 
-Longitude: 78°E – 82°E
-Latitude : 10°N – 14°N
+### Part I — Oil Spill Images
 
-Prototype Time Range
+Part I contains:
 
-The downloaded ocean-current subset covers:
+- 1,200 oil-spill Sentinel-1 SAR images
+- 1,200 corresponding ground-truth masks
 
-2026-09-08 06:00 UTC
-to
-2026-09-11 06:00 UTC
+The masks use:
 
-with hourly current data.
+- `1` → oil-spill region
+- `0` → background
 
-Spill Scenario
+### Part II — No-Oil and Look-Alike Images
 
-The prototype spill was initialized at:
+Part II contains:
+
+- 685 no-oil images
+- 685 no-oil masks
+- 685 look-alike images
+- 685 look-alike masks
+
+Look-alikes are dark SAR features that may resemble oil slicks but are not classified as oil spills.
+
+For the oil-spill detection task, the look-alike ground truth is treated as background.
+
+### Part III — Test Dataset
+
+Part III contains the test data:
+
+| Category | Images | Ground Truth |
+|---|---:|---:|
+| Oil spill | 150 | 150 |
+| No oil | 150 | 150 |
+| Look-alike | 150 | 150 |
+| **Total** | **450** | **450** |
+
+This provides a separate test set for evaluating the segmentation/detection model.
+
+### Satellite Dataset Source
+
+The three dataset parts are available through Zenodo:
+
+- Part I — `10.5281/zenodo.8346860`
+- Part II — `10.5281/zenodo.8253899`
+- Part III — `10.5281/zenodo.13761290`
+
+These datasets were published in 2024 by Trujillo-Acatitla, Tuxpan-Vargas, Ovando-Vázquez and Monterrubio-Martínez.
+
+---
+
+## 2. Prototype Spill Region
+
+The satellite-detection module identifies the spill region from the satellite image.
+
+For the Chennai-region prototype demonstration, the detected spill scenario used:
+
+**Detected Spill Location**
 
 Latitude  : 12.30000°N
 Longitude : 80.20000°E
 Time      : 2026-09-08 16:00 UTC
 
-The Lagrangian model performs:
+3. Copernicus Marine Ocean-Current Data
 
-Backward tracking to estimate the probable source
-Forward tracking to predict future oil movement
+The Lagrangian module uses ocean-current data from the Copernicus Marine Service.
+
+Dataset
+
+Global Ocean Physics Analysis and Forecast
+
+Dataset:
+
+cmems_mod_glo_phy_anfc_merged-uv_PT1H-i
+Variables Used
+Variable	Description	Unit
+uo	Eastward sea-water velocity	m/s
+vo	Northward sea-water velocity	m/s
+
+The surface current layer is used to model the movement of the oil.
+
+Geographic Subset
+Longitude : 78°E – 82°E
+Latitude  : 10°N – 14°N
+Temporal Coverage Used
+2026-09-08 06:00 UTC
+to
+2026-09-11 06:00 UTC
+
+The subset contains hourly ocean-current data.
+
+Surface Layer
+
+The prototype uses the surface layer at approximately:
+
+Depth : 0.494 m
+Lagrangian Processing
+
+The detected spill location is used as the starting point.
+
+The model performs:
+
+Detected Spill
+      ↓
+Backward Tracking
+      ↓
 Estimated Source
 
-For the prototype scenario, the backward trajectory estimated:
+and
+
+Detected Spill
+      ↓
+Forward Tracking
+      ↓
+Predicted Oil Trajectory
+Prototype Estimated Source
+
+For the prototype scenario:
 
 Latitude  : 12.22076°N
 Longitude : 80.13420°E
 Time      : 2026-09-08 06:00 UTC
 
-This estimated source location and time are then passed to the AIS module.
+The estimated source location and time are passed to the AIS vessel-identification module.
 
-3. Real AIS Dataset
-
-Real AIS data was used for developing and validating the AIS vessel-identification methodology.
-
+4. Real AIS Dataset
 Dataset Source
 
-MarineCadastre AIS data
+SPILLNET uses MarineCadastre AIS data for AIS trajectory development and model validation.
 
-The downloaded dataset was:
+The dataset used during development was:
 
 AIS_178896334879276928_691-1788963349118.csv
 Geographic Coverage
 
-The MarineCadastre dataset used during development covers the Gulf of Mexico region:
+The downloaded MarineCadastre dataset covers a region in the Gulf of Mexico:
 
-Longitude: -90° to -89°W
-Latitude : 28° to 29°N
+Longitude : -90° to -89°W
+Latitude  : 28° to 29°N
 Dataset Period
 
 The requested AIS period was:
 
 January 1–5, 2022
-
-The downloaded records contain timestamps around the corresponding dataset period.
-
 Dataset Size
+AIS records  : 162,637
+Unique MMSIs : 318
+Columns      : 17
+AIS Information Used
 
-The dataset contained approximately:
-
-162,637 AIS records
-318 unique vessels
-17 original columns
-
-Important AIS fields include:
+Important fields include:
 
 MMSI
 BaseDateTime
@@ -152,118 +222,121 @@ Candidate-vessel generation
 XGBoost development
 Controlled model validation
 
-The Gulf of Mexico dataset was used for development and validation of the AIS methodology. It should not be interpreted as Chennai AIS data.
+The Gulf of Mexico AIS dataset is a development and validation dataset and is not represented as Chennai AIS data.
 
-4. Synthetic Chennai AIS Dataset
+5. Synthetic Chennai AIS Dataset
 
-A synthetic AIS dataset was created specifically for the Chennai/Ennore prototype demonstration.
-
-This was necessary because the development AIS dataset described above covers the Gulf of Mexico rather than the Chennai region.
+Because the available MarineCadastre dataset covers the Gulf of Mexico rather than Chennai, a synthetic AIS dataset was created for the Chennai/Ennore prototype demonstration.
 
 Dataset
 synthetic_chennai_ais.csv
-Geographic Region
-
-The synthetic vessels represent vessel traffic around the Chennai/Ennore coastal region.
-
 Dataset Size
-1,225 AIS records
-25 vessels
-5-minute AIS intervals
+AIS records : 1,225
+Vessels     : 25
+Interval    : 5 minutes
 Time Range
 2026-09-08 04:00 UTC
 to
 2026-09-08 08:00 UTC
+Geographic Region
+
+The synthetic vessels represent vessel traffic around the Chennai/Ennore coastal region.
+
 Controlled Source Vessel
 
-One synthetic vessel was intentionally constructed to pass through the estimated spill-source location.
+One vessel was intentionally generated to pass through the estimated spill-source location.
 
-MMSI       : 419000000
-Vessel     : CHENNAI TRADER
-Vessel Type: Tanker
-Speed      : 10 knots
-COG        : 45°
-Controlled Source Location
+MMSI        : 419000000
+Vessel Name : CHENNAI TRADER
+Vessel Type : Tanker
+Speed       : 10 knots
+COG         : 45°
+Controlled Source Point
 Latitude  : 12.22076°N
 Longitude : 80.13420°E
 Time      : 2026-09-08 06:00 UTC
 
-The vessel CHENNAI TRADER passes through this controlled source location at the source time.
+The CHENNAI TRADER trajectory passes through the controlled source point at the estimated source time.
 
-Other synthetic vessels were generated at different distances from the source to create multiple AIS candidates for the vessel-ranking demonstration.
+Additional synthetic vessels were generated at different distances from the source so that the AIS module could demonstrate candidate-vessel filtering and XGBoost ranking.
 
-5. AIS Candidate Search Region
+The synthetic AIS dataset is explicitly used for prototype demonstration and is not presented as real vessel traffic data.
 
-Once the Lagrangian model estimates the probable spill source, the AIS module searches for vessels around that source.
+6. AIS Candidate Filtering
+
+After the Lagrangian module estimates the probable spill source, the AIS module searches for vessels around the estimated source.
 
 The prototype uses:
 
-Spatial search radius : 5 km
-Temporal window       : ±30 minutes
+Spatial radius : 5 km
+Time window    : ±30 minutes
 
-Therefore, AIS records are first filtered using:
+A vessel becomes an AIS candidate when its AIS records satisfy:
 
 Distance from estimated source ≤ 5 km
 AND
 Time difference from estimated source ≤ 30 minutes
 
-The resulting vessels become candidate vessels for the XGBoost model.
+The candidate vessels are then processed by the feature-engineering and XGBoost modules.
 
-6. AIS Features
+7. AIS Feature Engineering
 
-For each candidate vessel, 18 AIS-derived features are calculated.
+For every candidate vessel, SPILLNET calculates 18 AIS-derived features.
 
-These include:
-
+Spatial Features
 Closest distance to source
 Distance at window start
 Distance at window end
 Distance change
+Temporal Features
 Closest time difference
 Time inside source radius
 AIS point count
+Speed Features
 Average SOG
 Maximum SOG
 Speed at closest approach
 Speed change
-Average course change
-Course change at closest approach
 Approach speed
 Departure speed
+Behaviour and Continuity Features
+Average course change
+Course change at closest approach
 Maximum AIS gap
 Long AIS gap count
 Moving fraction
 
-These features are passed to the XGBoost model to estimate source consistency and rank candidate vessels.
+These features are supplied to the XGBoost model to estimate the source consistency of each candidate vessel.
 
-7. Data Flow
-
-The data flow through SPILLNET is:
-
-Satellite Imagery
-       ↓
+8. Data Usage Summary
+Dataset	Region	Purpose
+Sentinel-1 SAR Oil Spill Dataset	Dataset-specific SAR scenes	Oil-spill detection and segmentation
+Copernicus Marine	78–82°E, 10–14°N	Ocean-current and Lagrangian modelling
+MarineCadastre AIS	Gulf of Mexico	AIS development and controlled validation
+Synthetic Chennai AIS	Chennai/Ennore region	End-to-end prototype demonstration
+9. SPILLNET Data Flow
+Sentinel-1 SAR
+      ↓
 Oil Spill Detection
-       ↓
+      ↓
 Detected Spill Location + Time
-       ↓
-Copernicus Ocean Current Data
-       ↓
-Lagrangian Backward Tracking
-       ↓
+      ↓
+Copernicus Ocean Currents
+      ↓
+Lagrangian Backward / Forward Tracking
+      ↓
 Estimated Spill Source
-       ↓
-AIS Data
-       ↓
-5 km / ±30 min Candidate Filtering
-       ↓
+      ↓
+AIS Candidate Filtering
+      ↓
 18 AIS Features
-       ↓
+      ↓
 XGBoost
-       ↓
+      ↓
 Ranked Potential Source Vessels
 
 
-# Synthetic Predictive Risk Mapping Dataset
+## Predictive Risk Mapping Dataset
 
 The Predictive Risk Mapping module uses trajectory information from the SPILLNET oil-spill prediction pipeline together with a set of synthetic sensitive-zone data to estimate the potential impact of an oil spill on nearby regions.
 
@@ -303,11 +376,11 @@ For each zone, the system calculates the minimum distance between the predicted 
 
 A normalized proximity value is calculated as:
 
-Proximity = max(0, 1 - Distance / Radius)
+`Proximity = max(0, 1 - Distance / Radius)`
 
 The risk score is then calculated using:
 
-Risk Score = 100 × Proximity × Sensitivity × Priority
+`Risk Score = 100 × Proximity × Sensitivity × Priority`
 
 The resulting score is classified into three levels:
 
